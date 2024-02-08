@@ -65,7 +65,7 @@
 		
 		pieDiameter			: 38,
 		
-		piePosition			: 'center',	//'rightTop', 'leftTop', 'leftBottom', 'rightBottom'
+		piePosition			: 'left',	//'rightTop', 'leftTop', 'leftBottom', 'rightBottom'
 		
 		portrait			: false, //true, false. Select true if you don't want that your images are cropped
 		
