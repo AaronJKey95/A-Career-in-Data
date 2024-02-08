@@ -565,7 +565,7 @@ a.color1:hover {
     background:#fff;
     border-radius: 3px;
     margin-right: 20px;
-    margin-bottom: 20px;
+    margin-bottom: 0px;
     box-shadow: 0 0px 10px rgba(71,71,71,.2);
     -webkit-transition: .3s linear; 
     -moz-transition:.3s linear; 
@@ -573,7 +573,7 @@ a.color1:hover {
     -o-transition:.3s linear;
     transition: .3s linear;
 }
-.single-list-topics-content h2>a { margin: 1px 0;}
+.single-list-topics-content h2>a { margin: 13px 0;}
 /*.single-list-topics-content:last-child{margin-right: 0;}*/
 
 .single-list-topics-icon [class^="flaticon-"]:before,.single-list-topics-icon [class*=" flaticon-"]:before,.single-list-topics-icon [class^="flaticon-"]:after,.single-list-topics-icon [class*=" flaticon-"]:after {font-size: 45px;color:#343a3f;}
