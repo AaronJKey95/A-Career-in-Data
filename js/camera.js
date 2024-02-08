@@ -79,9 +79,9 @@
 		
 		thumbnails			: false,
 		
-		time				: 5000,	//milliseconds between the end of the sliding effect and the start of the nex one
+		time				: 4000,	//milliseconds between the end of the sliding effect and the start of the nex one
 		
-		transPeriod			: 1000,	//lenght of the sliding effect in milliseconds
+		transPeriod			: 500,	//lenght of the sliding effect in milliseconds
 		
 ////////callbacks
 
