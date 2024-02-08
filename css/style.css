@@ -573,7 +573,7 @@ a.color1:hover {
     -o-transition:.3s linear;
     transition: .3s linear;
 }
-.single-list-topics-content h2>a { margin: 13px 0;}
+.single-list-topics-content h3>a { margin: 13px 0;}
 /*.single-list-topics-content:last-child{margin-right: 0;}*/
 
 .single-list-topics-icon [class^="flaticon-"]:before,.single-list-topics-icon [class*=" flaticon-"]:before,.single-list-topics-icon [class^="flaticon-"]:after,.single-list-topics-icon [class*=" flaticon-"]:after {font-size: 45px;color:#343a3f;}
