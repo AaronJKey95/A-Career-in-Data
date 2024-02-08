@@ -557,7 +557,7 @@ a.color1:hover {
 
 .single-list-topics-content{
     display: flex;
-    align-items: center;
+    align-items: start;
     flex-direction: column;
     justify-content: center;
     width: 205px;
