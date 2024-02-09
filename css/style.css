@@ -536,7 +536,7 @@ a.color1:hover {
 .projects { position:relative; }
 .projects ul{ list-style-type: none; height:270px; overflow:hidden; width:950px; position:relative; }
 .projects ul li{ float:left; width:900px; height:270px; background:url(images/project.png) no-repeat 0 0; padding:8px;}
-.projects ul li .project-info{ float:left; width:300px; padding:10px; }
+.projects ul li .project-info{ float:left; width:340px; padding:10px; }
 .projects ul li .project-image{ float:right; width:560px; height:254px; position:relative; overflow:hidden; font-size:0; line-height:0;}
 .projects p { padding-bottom:15px; }
 .projects h4 { padding:5px 0 10px 0; }
