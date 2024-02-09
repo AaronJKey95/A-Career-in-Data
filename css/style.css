@@ -536,8 +536,8 @@ a.color1:hover {
 .projects { position:relative; }
 .projects ul{ list-style-type: none; height:270px; overflow:hidden; width:1165px; position:relative; }
 .projects ul li{ float:left; width:1150px; height:270px; background:url(images/project.png) no-repeat;background-size: 100% 100%; padding:8px;}
-.projects ul li .project-info{ float:left; width:355px; padding:10px; }
-.projects ul li .project-image{ float:right; width:741px; height:254px; position:relative; overflow:hidden; font-size:0; line-height:0;}
+.projects ul li .project-info{ float:left; width:360px; padding:10px; }
+.projects ul li .project-image{ float:right; width:743px; height:254px; position:relative; overflow:hidden; font-size:0; line-height:0;}
 .projects p { padding-bottom:15px; }
 .projects h4 { padding:5px 0 10px 0; }
 
