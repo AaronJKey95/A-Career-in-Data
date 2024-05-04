@@ -1,0 +1,114 @@
+1-e_i/d_i = 1-[e_i]/[At Risk]
+
+At Risk = 
+ VAR _Max = CALCULATE(COUNTROWS('rpt vw_Kaplan_Meier_Populations'), REMOVEFILTERS('Kaplan Meier Calculation'))
+ VAR _Selected_Value = SELECTEDVALUE('Kaplan Meier Calculation'[Value])-1
+ VAR _Running =  CALCULATE([Count], 'Kaplan Meier Calculation'[Value] <= _Selected_Value, REMOVEFILTERS('Kaplan Meier Calculation'))+0
+ RETURN _Max - _Running
+
+Censored = [Population] - [Events] +0
+
+Censored % = DIVIDE([Censored],[Population],BLANK())
+
+Chart Filter = VAR _Pop = CALCULATE(COUNTROWS('rpt vw_Kaplan_Meier_Populations'),REMOVEFILTERS('Kaplan Meier Calculation'[Value]))
+RETURN IF(_Pop >= [Chart Filter Value],1,0)
+
+Chart Filter Value = 50
+
+Chart Function = IF(SELECTEDVALUE('Confidence Interval'[Confidence Intervals]) = "Lower 95% Confidence Interval",[Lower 95% Confidence Interval], IF(SELECTEDVALUE('Confidence Interval'[Confidence Intervals]) = "Upper 95% Confidence Interval",[Upper 95% Confidence Interval],[Survival Function]))
+
+Count = var records = CALCULATE(COUNTROWS('rpt vw_Kaplan_Meier_Populations'),RELATEDTABLE('rpt vw_Kaplan_Meier_Populations'), KEEPFILTERS('rpt vw_Kaplan_Meier_Populations')) RETURN IF(ISBLANK(records),0,records)
+
+e_i = CALCULATE([Count],'rpt vw_Kaplan_Meier_Populations'[Event] = 1)
+
+Events = SUM('rpt vw_Kaplan_Meier_Populations'[Event])+0
+
+Lower 95% Confidence Interval = [Survival Function] - [Standard Error]
+
+Mean = AVERAGE('rpt vw_Kaplan_Meier_Populations'[DateLength])+0
+
+Mean Lower 95% Confidence Interval = [Mean]-[Mean St. Error]*1.96+0
+
+Mean St. Error = DIVIDE(STDEV.P('rpt vw_Kaplan_Meier_Populations'[DateLength]),SQRT([Population]),BLANK())
+
+Mean Upper 95% Confidence Interval = [Mean]+[Mean St. Error]*1.96+0
+
+Median = CALCULATE(MAX('Kaplan Meier Calculation'[Value]),FILTER('Kaplan Meier Calculation',[Survival Function]>0.5))+0
+
+Median Lower 95% Confidence Interval = CALCULATE(MAX('Kaplan Meier Calculation'[Value]),FILTER('Kaplan Meier Calculation',[Lower 95% Confidence Interval]>0.5))+0
+
+Median Upper 95% Confidence Interval = CALCULATE(MAX('Kaplan Meier Calculation'[Value]),FILTER('Kaplan Meier Calculation',[Upper 95% Confidence Interval]>0.5))+0
+
+Parameter Filter = IF(SELECTEDVALUE(Legend[Legend Fields]) == SELECTEDVALUE('Small Multiples'[Small Multiples Fields]),0,1)
+
+Population = COUNTROWS('rpt vw_Kaplan_Meier_Populations')+0
+
+Selections Applied = 
+"Kaplan Meier Type = "&SELECTEDVALUE('rpt vw_Kaplan_Meier_Populations'[KaplanMeierType])&"
+Date Group = "&SELECTEDVALUE('rpt vw_Kaplan_Meier_Populations'[DateGroup])&"
+Inclusion Dates = "&CONCATENATEX(VALUES('rpt vw_Kaplan_Meier_Populations'[Year]),'rpt vw_Kaplan_Meier_Populations'[Year],", ")&"
+SRG = "&SELECTEDVALUE('rpt vw_Kaplan_Meier_Populations'[SRG])&"
+Legend = "&MAX('Legend'[Legend])&"
+Small Multiples = "&MAX('Small Multiples'[Small Multiples])
+
+Slicer 3 Title = SELECTEDVALUE('rpt vw_Kaplan_Meier_Populations'[KaplanMeierType])&" Year"
+
+Standard Error = [Survival Function]*SQRT([Variance])*1.96
+
+Survival Function = 
+VAR _Table = ADDCOLUMNS(SUMMARIZE(FILTER(ALLSELECTED('Kaplan Meier Calculation'[Value]),ISONORAFTER('Kaplan Meier Calculation'[Value], MAX('Kaplan Meier Calculation'[Value]), DESC)),'Kaplan Meier Calculation'[Value]),"Function",[1-e_i/d_i])
+RETURN PRODUCTX(_Table,[Function])
+
+Title = "Kaplan Meier - " & SELECTEDVALUE('rpt vw_Kaplan_Meier_Populations'[SRG])
+
+Tooltip Cover = IF(ISBLANK(SELECTEDVALUE('rpt vw_Kaplan_Meier_Populations'[DateGroup])),"No values for "&SELECTEDVALUE('Kaplan Meier Calculation'[Value]),"")
+
+Tooltip Cover Colour = IF(ISBLANK(SELECTEDVALUE('rpt vw_Kaplan_Meier_Populations'[DateGroup])),"#FFFFFF","#00FFFFFF")
+
+Tooltip Function = 
+VAR _Table = ADDCOLUMNS(CALCULATETABLE('Kaplan Meier Calculation',REMOVEFILTERS('Kaplan Meier Calculation'[Value])),"Function",[Chart Function])
+RETURN MINX(FILTER(_Table, [Value] = SELECTEDVALUE('Kaplan Meier Calculation'[Value])),[Function])
+
+Tooltip Function Lower = 
+VAR _Table = ADDCOLUMNS(CALCULATETABLE('Kaplan Meier Calculation',REMOVEFILTERS('Kaplan Meier Calculation'[Value])),"Function",[Lower 95% Confidence Interval])
+RETURN MINX(FILTER(_Table, [Value] = SELECTEDVALUE('Kaplan Meier Calculation'[Value])),[Function])
+
+Tooltip Function Upper = 
+VAR _Table = ADDCOLUMNS(CALCULATETABLE('Kaplan Meier Calculation',REMOVEFILTERS('Kaplan Meier Calculation'[Value])),"Function",[Upper 95% Confidence Interval])
+RETURN MINX(FILTER(_Table, [Value] = SELECTEDVALUE('Kaplan Meier Calculation'[Value])),[Function])
+
+Tooltip Title = "Survival at "&SELECTEDVALUE('Kaplan Meier Calculation'[Value])&" "&SELECTEDVALUE('rpt vw_Kaplan_Meier_Populations'[DateGroup])&IF(ISBLANK(SELECTEDVALUE('rpt vw_Kaplan_Meier_Populations'[DateGroup])),"","s")
+
+Upper 95% Confidence Interval = [Survival Function] + [Standard Error]
+
+Variance = 
+VAR _Table = ADDCOLUMNS(SUMMARIZE(FILTER(ALLSELECTED('Kaplan Meier Calculation'[Value]),ISONORAFTER('Kaplan Meier Calculation'[Value], MAX('Kaplan Meier Calculation'[Value]), DESC)),'Kaplan Meier Calculation'[Value]),"Var",[Variance Estimator])
+RETURN SUMX(_Table,[Var])
+
+Variance Estimator = DIVIDE([Events],[At Risk]*([At Risk]-[Events]),BLANK())
+
+Kaplan Meier Calculation = GENERATESERIES(0,MAX('rpt vw_Kaplan_Meier_Populations'[DateLength]),1)
+
+Legend = 
+{
+   -- ("Confidence Intervals", NAMEOF('Confidence Interval'[Confidence Intervals]), 0),
+    ("No Legend", NAMEOF('rpt vw_Kaplan_Meier_Populations'[SRG]), 0),
+    ("Sub SRG", NAMEOF('rpt vw_Kaplan_Meier_Populations'[Sub_SRG]), 1),
+    ("Year", NAMEOF('rpt vw_Kaplan_Meier_Populations'[Year]), 2),
+    ("Staging", NAMEOF('rpt vw_Kaplan_Meier_Populations'[Staging]), 3),
+    ("Age", NAMEOF('rpt vw_Kaplan_Meier_Populations'[Age]), 4),
+    ("Region", NAMEOF('rpt vw_Kaplan_Meier_Populations'[Region]), 5),
+    ("Performance Status", NAMEOF('rpt vw_Kaplan_Meier_Populations'[PerformanceStatus]), 6),
+    ("Gender", NAMEOF('rpt vw_Kaplan_Meier_Populations'[Gender]), 7)
+}
+
+Small Multiples = {
+    ("No Multiples", NAMEOF('rpt vw_Kaplan_Meier_Populations'[SRG]), 0),
+    ("Sub SRG", NAMEOF('rpt vw_Kaplan_Meier_Populations'[Sub_SRG]), 1),
+    ("Year", NAMEOF('rpt vw_Kaplan_Meier_Populations'[Year]), 2),
+    ("Staging", NAMEOF('rpt vw_Kaplan_Meier_Populations'[Staging]), 3),
+    ("Age", NAMEOF('rpt vw_Kaplan_Meier_Populations'[Age]), 4),
+    ("Region", NAMEOF('rpt vw_Kaplan_Meier_Populations'[Region]), 5),
+    ("Performance Status", NAMEOF('rpt vw_Kaplan_Meier_Populations'[PerformanceStatus]), 6),
+    ("Gender", NAMEOF('rpt vw_Kaplan_Meier_Populations'[Gender]), 7)
+}
