@@ -1,1 +1,81 @@
+SELECT 
+	*, 
+	RANK() OVER (ORDER BY DateGroup) Rank
+	INTO #Charts
+	FROM (
+SELECT	
+	DateGroup,
+	COUNT(*) Population
+	FROM [rpt].[vw_Kaplan_Meier_Populations]
+	GROUP BY
+	DateGroup
+	HAVING COUNT(*) >= 50) A
 
+
+;WITH _Base AS (
+SELECT
+	pk_calendar - 2 Value,
+	COUNT(#3.Account) Count,
+	ISNULL(SUM(#3.Event),0) e_i,
+	#2.DateGroup,
+	#2.Population
+  FROM [ref].[Lu_Calendar] #1
+	INNER JOIN #Charts #2 ON 
+		1 = 1
+	LEFT JOIN [rpt].[vw_Kaplan_Meier_Populations] #3 ON
+	#2.DateGroup = #3.DateGroup AND
+	pk_calendar - 2 = DateLength
+		
+  WHERE pk_calendar <= 202
+  GROUP BY 
+	pk_calendar - 2,
+	#2.DateGroup,
+	#2.Population)
+, _Running AS (
+SELECT
+	Value,
+	Count,
+	e_i,
+	SUM(Count) OVER (PARTITION BY DateGroup ORDER BY Value) Running,
+	Population,
+	DateGroup
+	FROM _Base
+	)
+, _d_i AS (
+SELECT
+	Value,
+	Count,
+	e_i,
+	Running,
+	Population - ISNULL(LAG(Running,1) OVER (PARTITION BY DateGroup ORDER BY Value),0) d_i,
+	DateGroup
+	FROM _Running
+	)
+
+SELECT
+	Value,
+	Count,
+	e_i,
+	Running,
+	d_i,
+	1-CONVERT(FLOAT,e_i)/d_i AS Func,
+	DateGroup
+	INTO #Func
+	FROM _d_i
+	WHERE d_i <> 0
+	
+;WITH _Func AS (
+SELECT
+	Value,
+	CASE WHEN Func = 0 THEN 0.000000000000001 ELSE Func END AS Func, --Stopped LOG issues
+	DateGroup
+	FROM #Func)
+SELECT
+	Value,
+	EXP(SUM(LOG(Func)) OVER (PARTITION BY DateGroup ORDER BY Value)) SurvivalValue,
+	DateGroup
+	FROM _Func
+
+
+DROP TABLE #Func
+DROP TABLE #Charts
