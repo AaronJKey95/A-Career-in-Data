@@ -1,0 +1,189 @@
+USE [League_of_Legends_V2]
+GO
+
+/****** Object:  View [vw].[vw_EpochTimeStamp]    Script Date: 04/05/2024 17:51:39 ******/
+SET ANSI_NULLS ON
+GO
+
+SET QUOTED_IDENTIFIER ON
+GO
+
+
+
+
+
+
+
+
+
+
+
+CREATE VIEW [vw].[vw_EpochTimeStamp] AS
+WITH Patch AS (
+SELECT *, ROW_NUMBER() OVER (PARTITION BY 'A' ORDER BY StartDateTime DESC) RowNo
+FROM [ref].[Lu_Patch_Start]
+WHERE StartDateTime <= GETDATE())
+
+SELECT 
+      DATEDIFF(SECOND,'19700101',[StartDateTime]) EpochTimeStamp, patchVersion
+  FROM Patch
+  WHERE RowNo = 3
+GO
+
+/****** Object:  View [vw].[vw_Match_Details]    Script Date: 04/05/2024 17:51:39 ******/
+SET ANSI_NULLS ON
+GO
+
+SET QUOTED_IDENTIFIER ON
+GO
+
+
+/****** Script for SelectTopNRows command from SSMS  ******/
+CREATE VIEW [vw].[vw_Match_Details] AS 
+SELECT #1.*
+  FROM [dbo].[Match_Details] #1
+ -- INNER JOIN [dbo].[Summoner_Rank] #2
+	--ON #1.summonerId = #2.summonerId
+  INNER JOIN [dbo].[Match_Roles] #3
+	ON #1.matchId = #3.matchId
+	AND #1.summonerId = #3.summonerId
+GO
+
+/****** Object:  View [vw].[vw_Match_History_Check]    Script Date: 04/05/2024 17:51:39 ******/
+SET ANSI_NULLS ON
+GO
+
+SET QUOTED_IDENTIFIER ON
+GO
+
+
+
+
+
+
+
+
+
+
+
+
+CREATE view [vw].[vw_Match_History_Check] as 
+WITH Max AS (
+SELECT 
+	puuid,
+	MAX(RowUpdateDateTime) RowUpdateDateTime
+  FROM [dbo].[Match_List]
+  GROUP BY puuid)
+
+, diff AS (
+SELECT
+	   #1.[summonerId]
+      ,CONVERT(FLOAT,#1.[wins]) + CONVERT(FLOAT,#1.[losses]) AS GamesPlayedThisLoad
+      ,ISNULL(CONVERT(FLOAT,#2.[wins]) + CONVERT(FLOAT,#2.[losses]),0) AS GamesPlayedLastLoad
+	  ,CASE WHEN CONVERT(FLOAT,#1.[wins]) + CONVERT(FLOAT,#1.[losses]) >
+                 ISNULL(CONVERT(FLOAT,#2.[wins]) + CONVERT(FLOAT,#2.[losses]),0) THEN 1 ELSE 0 END AS NewGamesFlag
+  FROM [dbo].[Summoner_Rank] #1
+  LEFT JOIN [dbo].[Summoner_Rank_Backup] #2 ON #1.summonerId = #2.summonerId
+)
+
+SELECT #1.[puuid]
+      ,#1.[Region]
+	  ,#3.AltRegionID
+	  ,#6.RowUpdateDateTime
+	  ,tier
+	  ,CONVERT(FLOAT,leaguePoints) leaguePoints
+	  ,NewGamesFlag
+	  ,CASE WHEN #7.NewGamesFlag = 0 THEN NULL
+			WHEN CONVERT(FLOAT,leaguePoints) <= 200 THEN NULL
+			WHEN ISNULL(#6.RowUpdateDateTime,'19000101') <  CONVERT(DATE,GETDATE()) 
+			THEN 1 END AS IncludeFlag
+  FROM [dbo].[Summoner_Accounts] #1
+  INNER JOIN [ref].[Lu_Regions] #3 ON #1.Region = #3.RegionID
+  INNER JOIN [dbo].[Summoner_Rank] #4 ON #1.id = #4.summonerId
+  LEFT JOIN Max #6 ON #1.puuid = #6.puuid
+  INNER JOIN diff #7 ON #4.summonerId = #7.summonerId
+  --ORDER BY CONVERT(FLOAT,leaguePoints) DESC
+GO
+
+/****** Object:  View [vw].[vw_Missing_Match_Details]    Script Date: 04/05/2024 17:51:39 ******/
+SET ANSI_NULLS ON
+GO
+
+SET QUOTED_IDENTIFIER ON
+GO
+
+
+
+
+
+
+
+
+
+CREATE VIEW [vw].[vw_Missing_Match_Details] AS
+with a as (
+SELECT DISTINCT--20 seconds
+	#1.puuid,
+	#1.matchId,
+	regionid,
+	altRegionId,
+	CONVERT(FLOAT, leaguePoints) lp
+  FROM [dbo].[Match_List] #1
+  LEFT JOIN [dbo].[Summoner_Accounts] #2
+	ON #1.puuid = #2.puuid
+  LEFT JOIN [dbo].[Summoner_Rank] #3
+	ON #2.id = #3.summonerId
+  LEFT JOIN [ref].[Lu_Regions] #4
+	ON #1.matchId LIKE #4.regionId +'%')
+
+, c as (
+SELECT
+	MatchId
+	FROM [dbo].[Match_Details]
+	GROUP BY matchId)
+
+SELECT
+	#1.matchId,
+	regionid,
+	altRegionId,
+	SUM(LP)/10 MatchAverageLP,
+	CASE WHEN #2.matchId IS NULL AND SUM(LP)/10 > 50  THEN 1
+		 END AS IncludeFlag,
+	CASE WHEN #2.matchId IS NULL THEN 1
+		 END AS [MissingMatchFlag],
+	1 CriteriaFlag
+  FROM a #1
+  LEFT JOIN c #2 ON
+  #1.matchId = #2.matchId
+  WHERE #1.matchId <> 'A'
+  GROUP BY #1.matchID,
+	regionid,
+	altregionid,
+	#2.matchId
+GO
+
+/****** Object:  View [vw].[vw_Missing_Summoner_Details]    Script Date: 04/05/2024 17:51:39 ******/
+SET ANSI_NULLS ON
+GO
+
+SET QUOTED_IDENTIFIER ON
+GO
+
+
+
+
+
+CREATE VIEW [vw].[vw_Missing_Summoner_Details] AS
+SELECT DISTINCT
+	summonerId, 
+	#1.Region,
+	altRegionId
+  FROM [dbo].[Summoner_Rank] #1
+  LEFT JOIN [dbo].[Summoner_Accounts] #2 ON 
+	#1.summonerId = #2.id
+  LEFT JOIN [ref].[Lu_Regions] #3 ON
+	#1.Region = #3.regionId
+  WHERE #2.id IS NULL
+GO
+
+
