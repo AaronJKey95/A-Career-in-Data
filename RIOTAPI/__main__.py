@@ -4,7 +4,7 @@ from multiprocessing import Process  # prebuilt package for multiprocessing
 # begin multiprocessing
 if __name__ == "__main__":
     # Add in the daily API Key
-    Riot_API_SQLv2.new_api('RGAPI-dc487ccf-1466-48cb-ba82-fa8e430fe73a')
+    Riot_API_SQLv2.new_api('')
     # data dragon to check lookups are up-to-date
     Riot_API_SQLv2.data_dragon()
 
